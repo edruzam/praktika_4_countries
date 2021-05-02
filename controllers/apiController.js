@@ -25,10 +25,12 @@ module.exports = function (app) {
             });
     });
 
-    app.get("/api/room/:number/sensors", function (req, res) {
+    // b. näidata kõiki määratud mandri riike (riigi nimi, pealinn) 
+    app.get("/api/continent/:name/countries", function (req, res) {
         db.any(
-        "SELECT sensor.sensorname FROM sensor INNER JOIN controller_sensor ON controller_sensor.id_sensor=sensor.id " +
-        "WHERE controller_sensor.room=" + req.params.number + ":: varchar"
+        "SELECT country.name as country, trim(from city.name) capital FROM country " +
+        "INNER JOIN city ON city.id=country.capital " +
+        "WHERE country.continent='" + req.params.name + "':: varchar"
         )
         .then(function (data) {
             res.json({
@@ -36,8 +38,13 @@ module.exports = function (app) {
                 data: data,
             });
         })
-        .catch(function (err) {
-            return next(err);
+        .catch(error => {
+            if (Array.isArray(error) && 'getErrors' in error) {
+                // the error came from method `batch`;
+                // let's log the very first error:
+                error = error.getErrors()[0];
+            }
+            console.log("ERROR:", error.message || error);
         });
     });
 
