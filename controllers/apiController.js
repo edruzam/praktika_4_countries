@@ -151,6 +151,7 @@ module.exports = function (app) {
 
 
     // praktika 5 jaoks
+
     app.get("/api/continents", function (req, res) {
         db.any("SELECT DISTINCT continent FROM country")
             .then(function (data) {
@@ -167,6 +168,33 @@ module.exports = function (app) {
                 }
                 console.log("ERROR:", error.message || error);
             });
+    });
+
+    app.get("/api/countrybynamewithcapital/:name", function (req, res) {
+        db.any(
+        "SELECT DISTINCT ON (c.code) c.code as country_code, c.name as country_name, c.continent, c.region, c.surfacearea, " +
+        "c.indepyear, c.population as country_population, c.lifeexpectancy, c.gnp, c.gnpold, c.localname, c.governmentform, " +
+        "c.headofstate, c.code2, trim(from city.name) city_name, " +
+        "trim(from city.district) city_district, city.population as city_population " +
+        "FROM city " +
+        "INNER JOIN country as c ON c.code=city.countrycode " +
+        "WHERE c.name LIKE '%" + req.params.name + "%':: varchar AND c.capital=city.id " + 
+        "LIMIT 1"
+        )
+        .then(function (data) {
+            res.json({
+                status: "success",
+                data: data,
+            });
+        })
+        .catch(error => {
+            if (Array.isArray(error) && 'getErrors' in error) {
+                // the error came from method `batch`;
+                // let's log the very first error:
+                error = error.getErrors()[0];
+            }
+            console.log("ERROR:", error.message || error);
+        });
     });
 
 };
