@@ -30,9 +30,10 @@ module.exports = function (app) {
     // b. näidata kõiki määratud mandri riike (riigi nimi, pealinn) 
     app.get("/api/continent/:name/countries", function (req, res) {
         db.any(
-        "SELECT country.name as country, trim(from city.name) capital FROM country " +
+        "SELECT country.code, country.name as country, trim(from city.name) capital FROM country " +
         "INNER JOIN city ON city.id=country.capital " +
-        "WHERE country.continent='" + req.params.name + "':: varchar"
+        "WHERE country.continent='" + req.params.name + "':: varchar " +
+        "ORDER BY country.name ASC"
         )
         .then(function (data) {
             res.json({
@@ -146,4 +147,28 @@ module.exports = function (app) {
             console.log("ERROR:", error.message || error);
         });
     });
+
+
+
+    // praktika 5 jaoks
+    app.get("/api/continents", function (req, res) {
+        db.any("SELECT DISTINCT continent FROM country")
+            .then(function (data) {
+                res.json({
+                    status: "success",
+                    data: data,
+                });
+            })
+            .catch(error => {
+                if (Array.isArray(error) && 'getErrors' in error) {
+                    // the error came from method `batch`;
+                    // let's log the very first error:
+                    error = error.getErrors()[0];
+                }
+                console.log("ERROR:", error.message || error);
+            });
+    });
+
 };
+    
+
